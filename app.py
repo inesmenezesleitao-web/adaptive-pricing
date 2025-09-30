@@ -211,6 +211,21 @@ st.markdown("""
 
 SHOW_DEBUG = False  # change to False before real experiment
 
+# If we've just finished the survey, show a lightweight close page
+if st.session_state.get("show_close", False):
+    st.header("Thank you!")
+    st.markdown("Your responses were saved successfully.")
+    st.markdown(
+        """
+        <div style='margin-top: 1rem;'>
+          <button onclick="window.close()" style="font-size:1rem;padding:0.6rem 1rem;cursor:pointer;">Close this tab</button>
+        </div>
+        <div style='margin-top:0.75rem;color:#666;'>If the tab doesn't close automatically, you can close it manually.</div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.stop()
+
 # UI tweaks: enlarge question and buttons
 st.markdown(
     """
@@ -356,8 +371,9 @@ if st.session_state.finished or st.session_state.idx >= len(st.session_state.pro
                            fairness_score, satisfaction_score, price_sensitivity, enriched_comments]]
             append_rows(SURVEY_CSV, survey_row, survey_columns)
 
-            st.success("Thanks! Your responses were saved. You can close this tab.")
-            st.stop()
+            # After saving, show a close page on next rerun
+            st.session_state.show_close = True
+            st.rerun()
 
     st.stop()
 
