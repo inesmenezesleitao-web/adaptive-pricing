@@ -1,9 +1,6 @@
 
 # app.py
 # Streamlit Adaptive Pricing Experiment (simple, production-ready prototype)
-import gspread
-from google.oauth2.service_account import Credentials
-
 import time
 import os
 import uuid
@@ -211,37 +208,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-@st.cache_resource
-def get_sheets_client():
-    # Returns (ws_tx, ws_sv) or (None, None) if not configured
-    try:
-        sa_info = st.secrets["gcp_service_account"]
-        scopes = [
-            "https://www.googleapis.com/auth/spreadsheets",
-            "https://www.googleapis.com/auth/drive",
-        ]
-        creds = Credentials.from_service_account_info(sa_info, scopes=scopes)
-        gc = gspread.authorize(creds)
-        sh = gc.open_by_key(st.secrets["sheets"]["sheet_id"])
-        ws_tx = sh.worksheet("transactions")
-        ws_sv = sh.worksheet("surveys")
-        return ws_tx, ws_sv
-    except Exception as e:
-        # If secrets aren’t set (local dev without secrets), fallback later to CSV
-        if 'SHOW_DEBUG' in globals() and SHOW_DEBUG:
-            st.warning(f"Google Sheets not configured: {e}")
-        return None, None
-
-def ensure_headers(ws, headers):
-    try:
-        first = ws.row_values(1)
-        if not first:
-            ws.append_row(headers, value_input_option="USER_ENTERED")
-        elif first != headers:
-            ws.update('1:1', [headers])
-    except Exception:
-        pass
-
 
 SHOW_DEBUG = False  # change to False before real experiment
 
@@ -249,6 +215,7 @@ SHOW_DEBUG = False  # change to False before real experiment
 if st.session_state.get("show_close", False):
     st.header("Thank you!")
     st.success("Your responses were saved successfully. You can now close this tab.")
+    st.caption("Note: Browsers often block programmatic tab closing for security reasons.")
     st.stop()
 
 # UI tweaks: enlarge question and buttons
@@ -356,41 +323,49 @@ if st.session_state.finished or st.session_state.idx >= len(st.session_state.pro
 
         if st.button("Submit survey and save"):
             # Save transactions (one row per product)
-            # --- Save to Google Sheets if available; else fallback to CSV ---
-
-        # 1) Columns (keep exactly this order so headers match)
             tx_columns = ["timestamp","session_id","product_id","product_name","base_price",
-                        "offered_price","fair","would_buy","bought","revenue","lost_revenue",
-                        "decision_ms","fair_changes","buy_changes","up_pct","down_pct"]
+              "offered_price","fair","would_buy","bought","revenue","lost_revenue",
+              "decision_ms","fair_changes","buy_changes","up_pct","down_pct"]
 
+            tx_rows = []
+            now = datetime.utcnow().isoformat()
+            for row in st.session_state.history:
+                tx_rows.append([
+                now,
+                st.session_state.session_id,
+                row["product_id"],
+                row["product_name"],
+                row["base_price"],
+                row["offered_price"],
+                row["fair"],
+                row["would_buy"],
+                row["bought"],
+                row["revenue"],
+                row["lost_revenue"],
+                row.get("decision_ms", None),
+                row.get("fair_changes", None),
+                row.get("buy_changes", None),
+                UP_PCT,
+                DOWN_PCT
+            ])
+
+            append_rows(TX_CSV, tx_rows, tx_columns)
+
+            # Save survey (one row per session)
             survey_columns = ["timestamp","session_id","total_revenue","total_lost",
-                            "fairness_score","satisfaction_score","price_sensitivity","comments"]
+                              "fairness_score","satisfaction_score","price_sensitivity","comments"]
+            enriched_comments = comments
+            try:
+                enriched_comments = f"{comments}\n[personalized_pricing_fairness={personalized_fairness}]"
+            except Exception:
+                pass
+            survey_row = [[now, st.session_state.session_id, total_revenue, total_lost,
+                           fairness_score, satisfaction_score, price_sensitivity, enriched_comments]]
+            append_rows(SURVEY_CSV, survey_row, survey_columns)
 
-            # 2) Build rows (you already did tx_rows above; keep it)
-            #    survey_row is built just below; keep it too.
-
-            # 3) Try Google Sheets first
-            ws_tx, ws_sv = get_sheets_client()  # <- from the helper you added earlier
-            if ws_tx and ws_sv:
-                ensure_headers(ws_tx, tx_columns)
-                ensure_headers(ws_sv, survey_columns)
-
-                # Append transactions
-                for r in tx_rows:
-                    ws_tx.append_row(r, value_input_option="USER_ENTERED")
-
-                # Append survey (single row)
-                ws_sv.append_row(survey_row[0], value_input_option="USER_ENTERED")
-
-                st.success("Thanks! Your responses were saved to Google Sheets.")
-            else:
-                # Fallback: local CSV (works locally; on Streamlit Cloud it's ephemeral)
-                append_rows(TX_CSV, tx_rows, tx_columns)
-                append_rows(SURVEY_CSV, survey_row, survey_columns)
-                st.success("Saved locally (CSV). Tip: configure Google Sheets in Secrets for persistent storage.")
-
-            st.stop()
-
+            # After saving, show a close page on next rerun
+            st.session_state.show_close = True
+            st.rerun()
 
     st.stop()
 
