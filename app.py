@@ -359,37 +359,37 @@ if st.session_state.finished or st.session_state.idx >= len(st.session_state.pro
             # --- Save to Google Sheets if available; else fallback to CSV ---
 
         # 1) Columns (keep exactly this order so headers match)
-        tx_columns = ["timestamp","session_id","product_id","product_name","base_price",
-                    "offered_price","fair","would_buy","bought","revenue","lost_revenue",
-                    "decision_ms","fair_changes","buy_changes","up_pct","down_pct"]
+            tx_columns = ["timestamp","session_id","product_id","product_name","base_price",
+                        "offered_price","fair","would_buy","bought","revenue","lost_revenue",
+                        "decision_ms","fair_changes","buy_changes","up_pct","down_pct"]
 
-        survey_columns = ["timestamp","session_id","total_revenue","total_lost",
-                        "fairness_score","satisfaction_score","price_sensitivity","comments"]
+            survey_columns = ["timestamp","session_id","total_revenue","total_lost",
+                            "fairness_score","satisfaction_score","price_sensitivity","comments"]
 
-        # 2) Build rows (you already did tx_rows above; keep it)
-        #    survey_row is built just below; keep it too.
+            # 2) Build rows (you already did tx_rows above; keep it)
+            #    survey_row is built just below; keep it too.
 
-        # 3) Try Google Sheets first
-        ws_tx, ws_sv = get_sheets_client()  # <- from the helper you added earlier
-        if ws_tx and ws_sv:
-            ensure_headers(ws_tx, tx_columns)
-            ensure_headers(ws_sv, survey_columns)
+            # 3) Try Google Sheets first
+            ws_tx, ws_sv = get_sheets_client()  # <- from the helper you added earlier
+            if ws_tx and ws_sv:
+                ensure_headers(ws_tx, tx_columns)
+                ensure_headers(ws_sv, survey_columns)
 
-            # Append transactions
-            for r in tx_rows:
-                ws_tx.append_row(r, value_input_option="USER_ENTERED")
+                # Append transactions
+                for r in tx_rows:
+                    ws_tx.append_row(r, value_input_option="USER_ENTERED")
 
-            # Append survey (single row)
-            ws_sv.append_row(survey_row[0], value_input_option="USER_ENTERED")
+                # Append survey (single row)
+                ws_sv.append_row(survey_row[0], value_input_option="USER_ENTERED")
 
-            st.success("Thanks! Your responses were saved to Google Sheets.")
-        else:
-            # Fallback: local CSV (works locally; on Streamlit Cloud it's ephemeral)
-            append_rows(TX_CSV, tx_rows, tx_columns)
-            append_rows(SURVEY_CSV, survey_row, survey_columns)
-            st.success("Saved locally (CSV). Tip: configure Google Sheets in Secrets for persistent storage.")
+                st.success("Thanks! Your responses were saved to Google Sheets.")
+            else:
+                # Fallback: local CSV (works locally; on Streamlit Cloud it's ephemeral)
+                append_rows(TX_CSV, tx_rows, tx_columns)
+                append_rows(SURVEY_CSV, survey_row, survey_columns)
+                st.success("Saved locally (CSV). Tip: configure Google Sheets in Secrets for persistent storage.")
 
-        st.stop()
+            st.stop()
 
 
     st.stop()
