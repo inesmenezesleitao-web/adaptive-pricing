@@ -143,6 +143,7 @@ def others_avg_paid_by_product(exclude_session_id):
     df = read_tx()
     if df.empty:
         return {}
+    
     # Exclude current session
     df_excl = df[df["session_id"] != exclude_session_id]
     if df_excl.empty:
@@ -151,13 +152,22 @@ def others_avg_paid_by_product(exclude_session_id):
     # Primary: average among purchases only
     bought_mask = df_excl["bought"] == True
     df_bought = df_excl[bought_mask]
-    bought_means = df_bought.groupby("product_id")["offered_price"].mean().to_dict() if not df_bought.empty else {}
+    
+    if not df_bought.empty:
+        bought_means = df_bought.groupby("product_id")["offered_price"].mean().to_dict()
+    else:
+        bought_means = {}
 
     # Fallback: if a product has no purchases, compute average of all shown prices
     all_means = df_excl.groupby("product_id")["offered_price"].mean().to_dict()
 
     # Merge: prefer bought_means, else fallback to all_means
-    result = {pid: bought_means.get(pid, all_means.get(pid, None)) for pid in all_means.keys()}
+    result = {}
+    # Include all product_ids that exist
+    all_product_ids = set(all_means.keys()) | set(bought_means.keys())
+    for pid in all_product_ids:
+        result[pid] = bought_means.get(pid, all_means.get(pid, None))
+    
     return result
 @st.cache_resource
 def get_sheets_client():
@@ -316,7 +326,17 @@ if st.session_state.finished or st.session_state.idx >= len(st.session_state.pro
     else:
         # Compute "others paid" averages
         others = others_avg_paid_by_product(st.session_state.session_id)
-        hist_df["others_avg_paid"] = hist_df["product_id"].map(others).fillna(pd.NA)
+        
+        # Debug: show what we found (temporary, can remove after testing)
+        if SHOW_DEBUG and others:
+            st.write(f"Debug: Found {len(others)} products with others' data: {others}")
+        
+        # Map product_id to others_avg_paid, converting to float and handling None
+        hist_df["others_avg_paid"] = hist_df["product_id"].map(others)
+        # Convert None/NaN to pd.NA but keep numeric values as-is
+        hist_df["others_avg_paid"] = hist_df["others_avg_paid"].apply(
+            lambda x: float(x) if pd.notna(x) and x is not None else pd.NA
+        )
 
         # Show what you paid vs others
         display_cols = ["product_name","base_price","offered_price","bought","others_avg_paid"]
