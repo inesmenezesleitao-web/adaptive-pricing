@@ -163,7 +163,7 @@ def others_avg_paid_by_product(exclude_session_id):
     
     # Fallback to CSV if Sheets didn't work or returned empty
     if df is None or df.empty:
-    df = read_tx()
+        df = read_tx()
     
     if df.empty:
         return {}
@@ -182,8 +182,8 @@ def others_avg_paid_by_product(exclude_session_id):
 
     # Primary: average among purchases only
     if 'bought' in df_excl.columns:
-    bought_mask = df_excl["bought"] == True
-    df_bought = df_excl[bought_mask]
+        bought_mask = df_excl["bought"] == True
+        df_bought = df_excl[bought_mask]
         
         if not df_bought.empty:
             bought_means = df_bought.groupby("product_id")["offered_price"].mean().to_dict()
@@ -598,7 +598,7 @@ if img_url:
                 # Fallback to Streamlit's st.image
                 st.image(img, use_container_width=True)
                 img_loaded = True
-    except Exception as e:
+        except Exception as e:
             error_msg = str(e)
             # Try direct file path without PIL
             try:
