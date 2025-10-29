@@ -140,21 +140,55 @@ def read_tx():
     return df
 
 def others_avg_paid_by_product(exclude_session_id):
+    # Try to read from Google Sheets first, then fallback to CSV
+    df = None
+    
+    # Try Google Sheets first
+    try:
+        ws_tx, _ = get_sheets_client()
+        if ws_tx:
+            # Read all data from Google Sheets
+            records = ws_tx.get_all_records()
+            if records:
+                df = pd.DataFrame(records)
+                # Normalize column names if needed
+                if 'product_id' in df.columns and 'offered_price' in df.columns:
+                    # Convert types
+                    df['offered_price'] = pd.to_numeric(df['offered_price'], errors='coerce')
+                    if 'bought' in df.columns:
+                        df['bought'] = df['bought'].astype(str).str.lower().isin(['true', '1', 'yes'])
+    except Exception:
+        # Silently fallback to CSV
+        pass
+    
+    # Fallback to CSV if Sheets didn't work or returned empty
+    if df is None or df.empty:
     df = read_tx()
+    
     if df.empty:
         return {}
     
     # Exclude current session
+    if 'session_id' not in df.columns:
+        return {}
+    
     df_excl = df[df["session_id"] != exclude_session_id]
     if df_excl.empty:
         return {}
 
+    # Ensure we have the required columns
+    if 'product_id' not in df_excl.columns or 'offered_price' not in df_excl.columns:
+        return {}
+
     # Primary: average among purchases only
+    if 'bought' in df_excl.columns:
     bought_mask = df_excl["bought"] == True
     df_bought = df_excl[bought_mask]
-    
-    if not df_bought.empty:
-        bought_means = df_bought.groupby("product_id")["offered_price"].mean().to_dict()
+        
+        if not df_bought.empty:
+            bought_means = df_bought.groupby("product_id")["offered_price"].mean().to_dict()
+        else:
+            bought_means = {}
     else:
         bought_means = {}
 
@@ -166,7 +200,9 @@ def others_avg_paid_by_product(exclude_session_id):
     # Include all product_ids that exist
     all_product_ids = set(all_means.keys()) | set(bought_means.keys())
     for pid in all_product_ids:
-        result[pid] = bought_means.get(pid, all_means.get(pid, None))
+        val = bought_means.get(pid, all_means.get(pid, None))
+        if val is not None and not pd.isna(val):
+            result[str(pid)] = float(val)
     
     return result
 @st.cache_resource
@@ -255,7 +291,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-SHOW_DEBUG = False  # change to False before real experiment
+SHOW_DEBUG = True  # Temporarily enabled to debug others_avg_paid issue
 
 # If we've just finished the survey, show a lightweight close page
 if st.session_state.get("show_close", False):
@@ -327,9 +363,11 @@ if st.session_state.finished or st.session_state.idx >= len(st.session_state.pro
         # Compute "others paid" averages
         others = others_avg_paid_by_product(st.session_state.session_id)
         
-        # Debug: show what we found (temporary, can remove after testing)
-        if SHOW_DEBUG and others:
+        # Debug: show what we found
+        if SHOW_DEBUG:
+            st.write(f"Debug: Session ID: {st.session_state.session_id}")
             st.write(f"Debug: Found {len(others)} products with others' data: {others}")
+            st.write(f"Debug: Current product IDs: {list(hist_df['product_id'].unique())}")
         
         # Map product_id to others_avg_paid, converting to float and handling None
         hist_df["others_avg_paid"] = hist_df["product_id"].map(others)
@@ -560,7 +598,7 @@ if img_url:
                 # Fallback to Streamlit's st.image
                 st.image(img, use_container_width=True)
                 img_loaded = True
-        except Exception as e:
+    except Exception as e:
             error_msg = str(e)
             # Try direct file path without PIL
             try:
