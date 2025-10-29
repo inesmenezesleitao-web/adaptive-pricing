@@ -446,7 +446,7 @@ if st.session_state.finished or st.session_state.idx >= len(st.session_state.pro
             key="prefer_fixed_pricing"
         )
         
-        st.markdown("<div class='big-q secondary'>And how do you accept it if it is explained and you are aware of the reasons for a price raise, such as peak hour? From 0 being not at all acceptable to 10 being fully acceptable.</div>", unsafe_allow_html=True)
+        st.markdown("<div class='big-q secondary'>And how do you accept it if the price is explained, making and aware of the reasons for a price raise, such as peak hour? From 0 being not at all acceptable to 10 being fully acceptable.</div>", unsafe_allow_html=True)
         acceptance_with_explanation = st.slider(
             "",
             min_value=0, max_value=10, value=5, help="0 = Do not accept, 10 = Fully accept",
