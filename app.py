@@ -9,10 +9,17 @@ from datetime import datetime
 
 import pandas as pd
 import streamlit as st
+from PIL import Image
+import io
+import base64
+
+import gspread
+from google.oauth2.service_account import Credentials
+
 
 # ---------- CONFIG (edit these if you want) ----------
-APP_TITLE = "Adaptive Pricing Experiment"
-NUM_PRODUCTS_TO_SHOW = 5          # how many products per session
+APP_TITLE = "Uber Trip Pricing Experiment"
+NUM_PRODUCTS_TO_SHOW = 5          # how many trips per session
 UP_PCT = 0.12                     # +12% if ( would buy)
 DOWN_PCT = 0.08                   # -8% otherwise (wouldn't buy OR skip)
 MIN_MULTIPLIER = 0.50             # don't go below 50% of base
@@ -37,7 +44,7 @@ PRODUCTS_CSV = "products.csv"
 os.makedirs(DATA_DIR, exist_ok=True)
 
 def load_products():
-    """Load products from CSV or fallback to defaults."""
+    """Load trips from CSV or fallback to defaults."""
     if os.path.exists(PRODUCTS_CSV):
         df = pd.read_csv(PRODUCTS_CSV)
 
@@ -48,7 +55,7 @@ def load_products():
 
         # Fill / normalize columns
         if "id" not in df.columns:
-            df["id"] = [f"p{i+1}" for i in range(len(df))]
+            df["id"] = [f"t{i+1}" for i in range(len(df))]
         if "image_url" not in df.columns:
             df["image_url"] = ""
 
@@ -62,16 +69,16 @@ def load_products():
 
     # Fallback default list (used only if products.csv is missing)
     return [
-        {"id": "p1", "name": "Wireless Headphones", "base_price": 79.0,
-         "image_url": "images/headphones.jpg"},
-        {"id": "p2", "name": "Electric Kettle", "base_price": 39.0,
-         "image_url": "images/kettle.jpg"},
-        {"id": "p3", "name": "Backpack", "base_price": 49.0,
-         "image_url": "images/backpack.jpg"},
-        {"id": "p4", "name": "Bluetooth Speaker", "base_price": 59.0,
-         "image_url": "images/speaker.jpg"},
-        {"id": "p5", "name": "Desk Lamp", "base_price": 29.0,
-         "image_url": "images/lamp.jpg"},
+        {"id": "t1", "name": "Marquês to Campo grande", "base_price": 4.0,
+         "image_url": ""},
+        {"id": "t2", "name": "Marquês to Cais do Sodré", "base_price": 6.0,
+         "image_url": ""},
+        {"id": "t3", "name": "Marquês to Belém", "base_price": 9.0,
+         "image_url": ""},
+        {"id": "t4", "name": "Marquês to Carcavelos", "base_price": 15.0,
+         "image_url": ""},
+        {"id": "t5", "name": "Marquês to Costa da Caparica", "base_price": 18.0,
+         "image_url": ""},
     ]
     
 
@@ -96,7 +103,7 @@ def read_tx():
     cols = [
         "timestamp","session_id","product_id","product_name","base_price",
         "offered_price","fair","would_buy","bought","revenue","lost_revenue",
-        "decision_ms","fair_changes","buy_changes","up_pct","down_pct"
+        "decision_ms","fair_changes","buy_changes","up_pct","down_pct","others_avg_paid"
     ]
     if not os.path.exists(TX_CSV):
         return pd.DataFrame(columns=cols)
@@ -118,7 +125,7 @@ def read_tx():
 
     # numeric columns
     for c in ["offered_price", "base_price", "revenue", "lost_revenue", "decision_ms",
-              "up_pct", "down_pct", "fair_changes", "buy_changes"]:
+              "up_pct", "down_pct", "fair_changes", "buy_changes", "others_avg_paid"]:
         if c in df.columns:
             df[c] = pd.to_numeric(df[c], errors="coerce")
 
@@ -152,6 +159,35 @@ def others_avg_paid_by_product(exclude_session_id):
     # Merge: prefer bought_means, else fallback to all_means
     result = {pid: bought_means.get(pid, all_means.get(pid, None)) for pid in all_means.keys()}
     return result
+@st.cache_resource
+def get_sheets_client():
+    try:
+        sa_info = st.secrets["gcp_service_account"]
+        scopes = [
+            "https://www.googleapis.com/auth/spreadsheets",
+            "https://www.googleapis.com/auth/drive",
+        ]
+        creds = Credentials.from_service_account_info(sa_info, scopes=scopes)
+        gc = gspread.authorize(creds)
+        sh = gc.open_by_key(st.secrets["sheets"]["sheet_id"])
+        ws_tx = sh.worksheet("transactions")
+        ws_sv = sh.worksheet("surveys")
+        return ws_tx, ws_sv
+    except Exception as e:
+        if 'SHOW_DEBUG' in globals() and SHOW_DEBUG:
+            st.warning(f"Google Sheets not configured: {e}")
+        return None, None
+
+def ensure_headers(ws, headers):
+    try:
+        first = ws.row_values(1)
+        if not first:
+            ws.append_row(headers, value_input_option="USER_ENTERED")
+        elif first != headers:
+            ws.update('1:1', [headers])
+    except Exception:
+        pass
+
 
 # ---------- SESSION STATE ----------
 if "session_id" not in st.session_state:
@@ -191,9 +227,9 @@ if "touched_buy" not in st.session_state:
 
 
 # ---------- UI ----------
-st.set_page_config(page_title=APP_TITLE, page_icon="💶", layout="centered")
+st.set_page_config(page_title=APP_TITLE, page_icon="🚗", layout="centered")
 st.title(APP_TITLE)
-st.caption("Show a product → ask fairness & purchase → adapt prices in real time to maximize revenue.")
+st.caption("Experiment of pricing of different Uber trips departing from Marquês de Pombal.")
 # --- Styling helpers for bigger questions ---
 st.markdown("""
 <style>
@@ -215,7 +251,6 @@ SHOW_DEBUG = False  # change to False before real experiment
 if st.session_state.get("show_close", False):
     st.header("Thank you!")
     st.success("Your responses were saved successfully. You can now close this tab.")
-    st.caption("Note: Browsers often block programmatic tab closing for security reasons.")
     st.stop()
 
 # UI tweaks: enlarge question and buttons
@@ -234,6 +269,19 @@ st.markdown(
     div[data-testid="stDataFrame"] * { font-size: 1.20rem !important; }
     /* Enlarge buttons */
     .stButton > button { font-size: 1.2rem; padding: 0.80rem 1.35rem; }
+    /* Improve image quality and rendering for photos */
+    img { 
+        image-rendering: -webkit-optimize-contrast;
+        image-rendering: high-quality;
+        max-width: 100%;
+        height: auto;
+        object-fit: contain;
+    }
+    /* Ensure Streamlit images maintain quality */
+    [data-testid="stImage"] img {
+        image-rendering: -webkit-optimize-contrast;
+        image-rendering: high-quality;
+    }
     </style>
     """,
     unsafe_allow_html=True,
@@ -266,18 +314,25 @@ if st.session_state.finished or st.session_state.idx >= len(st.session_state.pro
     if hist_df.empty:
         st.info("No interactions recorded in this session.")
     else:
-        # Compute “others paid” averages
+        # Compute "others paid" averages
         others = others_avg_paid_by_product(st.session_state.session_id)
         hist_df["others_avg_paid"] = hist_df["product_id"].map(others).fillna(pd.NA)
 
         # Show what you paid vs others
         display_cols = ["product_name","base_price","offered_price","bought","others_avg_paid"]
         st.subheader("What you saw vs. what others paid (avg)")
+        st.markdown("""
+        <style>
+        .dataframe { font-size: 1.6rem !important; }
+        .dataframe td { font-size: 1.6rem !important; padding: 0.75rem !important; }
+        .dataframe th { font-size: 1.6rem !important; padding: 0.75rem !important; }
+        </style>
+        """, unsafe_allow_html=True)
         st.dataframe(hist_df[display_cols].rename(columns={
-            "product_name":"Product",
+            "product_name":"Trip",
             "base_price":"Base €",
             "offered_price":"You saw €",
-            "bought":"You bought?",
+            "bought":"You booked?",
             "others_avg_paid":"Others avg paid €"
         }), use_container_width=True)
 
@@ -293,75 +348,136 @@ if st.session_state.finished or st.session_state.idx >= len(st.session_state.pro
             c3.metric("Acceptance rate", f"{acceptance_rate:.1f}%")
 
         st.divider()
-        st.subheader("Perception of dynamic pricing")
+        st.subheader("Perception of Uber dynamic pricing")
 
-        st.markdown("<div class='big-q secondary'>How fair do you feel the pricing process was overall?</div>", unsafe_allow_html=True)
-        fairness_score = st.slider(
+        st.markdown("<div class='big-q secondary'>How fair is it for Uber to charge different prices at different times of the day (e.g., peak hours, rush hour, late night)?</div>", unsafe_allow_html=True)
+        time_based_fairness = st.slider(
             "",
-            min_value=0, max_value=10, value=5, help="0 = Not fair at all, 10 = Very fair",
+            min_value=0, max_value=10, value=5, help="0 = Not fair at all, 10 = Completely fair",
             label_visibility="collapsed",
+            key="time_based_fairness"
         )
-        st.markdown("<div class='big-q secondary'>How comfortable are you with prices changing dynamically (by time/user)?</div>", unsafe_allow_html=True)
-        satisfaction_score = st.slider(
+        
+        st.markdown("<div class='big-q secondary'>How fair is it for Uber to charge different prices based on demand factors (e.g., weather conditions, special events, high demand periods)?</div>", unsafe_allow_html=True)
+        demand_based_fairness = st.slider(
             "",
-            min_value=0, max_value=10, value=5, help="0 = Not comfortable, 10 = Very comfortable",
+            min_value=0, max_value=10, value=5, help="0 = Not fair at all, 10 = Completely fair",
             label_visibility="collapsed",
+            key="demand_based_fairness"
         )
-        st.markdown("<div class='big-q secondary'>How transparent did the pricing feel?</div>", unsafe_allow_html=True)
-        price_sensitivity = st.slider(
-            "",
-            min_value=0, max_value=10, value=5, help="0 = Not transparent, 10 = Very transparent",
-            label_visibility="collapsed",
-        )
-        st.markdown("<div class='big-q secondary'>Is it fair for software to adjust your price (sometimes higher, sometimes discounted) based on predicted willingness to pay?</div>", unsafe_allow_html=True)
+        
+        st.markdown("<div class='big-q secondary'>How fair is it for Uber to charge different prices to different users for the same trip at the same time, based on user-specific data (e.g., your past booking behavior, willingness to pay)?</div>", unsafe_allow_html=True)
         personalized_fairness = st.slider(
             "",
             min_value=0, max_value=10, value=5, help="0 = Not fair at all, 10 = Completely fair",
             label_visibility="collapsed",
+            key="personalized_fairness"
         )
-        comments = st.text_area("Any thoughts on dynamic pricing, fairness, or trust?")
+        
+        st.markdown("<div class='big-q secondary'>How fair and transparent do you feel the pricing process was overall? Were you able to understand why prices might vary?</div>", unsafe_allow_html=True)
+        fairness_transparency_score = st.slider(
+            "",
+            min_value=0, max_value=10, value=5, help="0 = Not fair/transparent at all, 10 = Very fair and transparent",
+            label_visibility="collapsed",
+            key="fairness_transparency_score"
+        )
+        
+        st.markdown("<div class='big-q secondary'>From a fixed pricing for km (0) to totally dynamic pricing (10), what do you prefer?</div>", unsafe_allow_html=True)
+        prefer_fixed_pricing = st.slider(
+            "",
+            min_value=0, max_value=10, value=5, help="0 = Fixed pricing for km, 10 = Totally dynamic pricing",
+            label_visibility="collapsed",
+            key="prefer_fixed_pricing"
+        )
+        
+        st.markdown("<div class='big-q secondary'>And how do you accept it if it is explained and you are aware of the reasons for a price raise, such as peak hour?</div>", unsafe_allow_html=True)
+        acceptance_with_explanation = st.slider(
+            "",
+            min_value=0, max_value=10, value=5, help="0 = Do not accept, 10 = Fully accept",
+            label_visibility="collapsed",
+            key="acceptance_with_explanation"
+        )
+        
+        comments = st.text_area("Any thoughts on Uber's dynamic pricing, fairness, transparency, or trust?")
 
         if st.button("Submit survey and save"):
-            # Save transactions (one row per product)
             tx_columns = ["timestamp","session_id","product_id","product_name","base_price",
-              "offered_price","fair","would_buy","bought","revenue","lost_revenue",
-              "decision_ms","fair_changes","buy_changes","up_pct","down_pct"]
+                          "offered_price","fair","would_buy","bought","revenue","lost_revenue",
+                          "decision_ms","fair_changes","buy_changes","up_pct","down_pct","others_avg_paid"]
+
+            survey_columns = ["timestamp","session_id","total_revenue","total_lost",
+                              "time_based_fairness","demand_based_fairness","personalized_fairness",
+                              "fairness_transparency_score","prefer_fixed_pricing",
+                              "acceptance_with_explanation","comments"]
+
+            now = datetime.utcnow().isoformat()
 
             tx_rows = []
-            now = datetime.utcnow().isoformat()
             for row in st.session_state.history:
+                # Get others_avg_paid for this product from the already computed hist_df
+                matching_row = hist_df[hist_df["product_id"] == row["product_id"]]
+                if not matching_row.empty:
+                    others_avg = matching_row["others_avg_paid"].iloc[0]
+                    # Convert pd.NA or NaN to None for saving, otherwise convert to float
+                    try:
+                        if pd.isna(others_avg):
+                            others_avg = None
+                        else:
+                            # Convert to float if it's a numeric value
+                            others_avg = float(others_avg)
+                    except (TypeError, ValueError):
+                        others_avg = None
+                else:
+                    others_avg = None
                 tx_rows.append([
+                    now,
+                    st.session_state.session_id,
+                    row["product_id"],
+                    row["product_name"],
+                    row["base_price"],
+                    row["offered_price"],
+                    row["fair"],
+                    row["would_buy"],
+                    row["bought"],
+                    row["revenue"],
+                    row["lost_revenue"],
+                    row.get("decision_ms", None),
+                    row.get("fair_changes", None),
+                    row.get("buy_changes", None),
+                    UP_PCT,
+                    DOWN_PCT,
+                    others_avg
+                ])
+
+            total_revenue = sum(r["revenue"] for r in st.session_state.history) if st.session_state.history else 0.0
+            total_lost    = sum(r["lost_revenue"] for r in st.session_state.history) if st.session_state.history else 0.0
+
+            survey_row = [[
                 now,
                 st.session_state.session_id,
-                row["product_id"],
-                row["product_name"],
-                row["base_price"],
-                row["offered_price"],
-                row["fair"],
-                row["would_buy"],
-                row["bought"],
-                row["revenue"],
-                row["lost_revenue"],
-                row.get("decision_ms", None),
-                row.get("fair_changes", None),
-                row.get("buy_changes", None),
-                UP_PCT,
-                DOWN_PCT
-            ])
+                float(total_revenue),
+                float(total_lost),
+                time_based_fairness,
+                demand_based_fairness,
+                personalized_fairness,
+                fairness_transparency_score,
+                prefer_fixed_pricing,
+                acceptance_with_explanation,
+                comments,
+            ]]
 
-            append_rows(TX_CSV, tx_rows, tx_columns)
-
-            # Save survey (one row per session)
-            survey_columns = ["timestamp","session_id","total_revenue","total_lost",
-                              "fairness_score","satisfaction_score","price_sensitivity","comments"]
-            enriched_comments = comments
-            try:
-                enriched_comments = f"{comments}\n[personalized_pricing_fairness={personalized_fairness}]"
-            except Exception:
-                pass
-            survey_row = [[now, st.session_state.session_id, total_revenue, total_lost,
-                           fairness_score, satisfaction_score, price_sensitivity, enriched_comments]]
-            append_rows(SURVEY_CSV, survey_row, survey_columns)
+            ws_tx, ws_sv = get_sheets_client()
+            if ws_tx and ws_sv:
+                ensure_headers(ws_tx, tx_columns)
+                ensure_headers(ws_sv, survey_columns)
+                for r in tx_rows:
+                    ws_tx.append_row(r, value_input_option="USER_ENTERED")
+                ws_sv.append_row(survey_row[0], value_input_option="USER_ENTERED")
+                st.success("Thanks! Your responses were saved to Google Sheets.")
+            else:
+                append_rows(TX_CSV, tx_rows, tx_columns)
+                append_rows(SURVEY_CSV, survey_row, survey_columns)
+                st.success("Saved locally (CSV). Tip: configure Google Sheets in Secrets for persistent storage.")
 
             # After saving, show a close page on next rerun
             st.session_state.show_close = True
@@ -369,12 +485,12 @@ if st.session_state.finished or st.session_state.idx >= len(st.session_state.pro
 
     st.stop()
 
-# ---------- MAIN FLOW: show current product ----------
+# ---------- MAIN FLOW: show current trip ----------
 products = st.session_state.products
 idx = st.session_state.idx
 product = products[idx]
 
-# Start timing + reset hesitation counters for this product
+# Start timing + reset hesitation counters for this trip
 st.session_state.start_ts = time.time()
 st.session_state.fair_changes = 0
 st.session_state.buy_changes = 0
@@ -389,19 +505,64 @@ if offered < base:
 
 # UI
 st.progress((idx) / len(products))
-st.subheader(f"Product {idx+1} of {len(products)}: {product['name']}")
+st.subheader(f"Trip {idx+1} of {len(products)}: {product['name']}")
 
-# Robust image loader
+# Display trip image if available
 img_url = str(product.get("image_url", "")).strip()
 if img_url:
-    try:
-        st.image(img_url, width=175)
+    # Try multiple approaches to load the image
+    img_loaded = False
+    error_msg = None
+    
+    # First try: PIL with relative path
+    if os.path.exists(img_url):
+        try:
+            img = Image.open(img_url)
+            # Convert RGBA/LA/P to RGB for better compatibility
+            if img.mode in ('RGBA', 'LA'):
+                rgb_img = Image.new('RGB', img.size, (255, 255, 255))
+                rgb_img.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
+                img = rgb_img
+            elif img.mode == 'P':
+                img = img.convert('RGB')
+            elif img.mode not in ('RGB', 'L'):
+                img = img.convert('RGB')
+            
+            # Try base64 encoding approach
+            try:
+                buffered = io.BytesIO()
+                img.save(buffered, format="PNG")
+                img_str = base64.b64encode(buffered.getvalue()).decode()
+                img_html = f'<img src="data:image/png;base64,{img_str}" style="max-width:100%;height:auto;">'
+                st.markdown(img_html, unsafe_allow_html=True)
+                img_loaded = True
+            except Exception as e3:
+                # Fallback to Streamlit's st.image
+                st.image(img, use_container_width=True)
+                img_loaded = True
     except Exception as e:
-        if 'SHOW_DEBUG' in globals() and SHOW_DEBUG:
-            st.warning(f"Image failed to load: {img_url}\n{e}")
-        else:
-            st.caption("Image unavailable.")
-
+            error_msg = str(e)
+            # Try direct file path without PIL
+            try:
+                st.image(img_url, use_container_width=True)
+                img_loaded = True
+            except Exception as e2:
+                error_msg = f"PIL: {e}, Direct: {e2}"
+    
+    # If still not loaded, show detailed error
+    if not img_loaded:
+        # Temporarily show debug info
+        st.error(f"⚠️ Image loading failed")
+        st.caption(f"Path: {img_url}")
+        st.caption(f"Exists: {os.path.exists(img_url)}")
+        if error_msg:
+            st.caption(f"Error: {error_msg}")
+        if os.path.exists(img_url):
+            try:
+                test_img = Image.open(img_url)
+                st.caption(f"Format: {test_img.format}, Mode: {test_img.mode}, Size: {test_img.size}")
+            except Exception as e:
+                st.caption(f"PIL test error: {e}")
 
 price_col, info_col = st.columns([2, 1])
 with price_col:
@@ -438,7 +599,7 @@ def on_change_buy():
 
 # Prominent main question heading before radio
 st.markdown(
-    "<div class='big-q'>Do you consider this price to be fair? If you needed this item, would you buy it at this price?</div>",
+    "<div class='big-q'>Do you consider this price to be fair? If you needed this trip, would you book it at this price?</div>",
     unsafe_allow_html=True,
 )
 combined_answer = st.radio(
@@ -498,7 +659,7 @@ if submitted:
         st.session_state.multiplier = clamp(st.session_state.multiplier * (1 - step),
                                             MIN_MULTIPLIER, MAX_MULTIPLIER)
 
-    # Go to next product or finish
+    # Go to next trip or finish
     st.session_state.idx += 1
     if st.session_state.idx >= len(st.session_state.products):
         st.session_state.finished = True

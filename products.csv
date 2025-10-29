@@ -1,6 +1,6 @@
 id,name,base_price,image_url
-p1,Wireless Headphones,69.0,images/headphones.jpg
-p2,Electric Kettle,29.0,images/kettle.jpg
-p3,Backpack,39.0,images/backpack.jpg
-p4,Bluetooth Speaker,49.0,images/speaker.jpg
-p5,Desk Lamp,19.0,images/lamp.jpg
+t1,Marquês to Campo grande,4.0,images/marques_to_campo_grande.jpg
+t2,Marquês to Cais do Sodré,6.0,images/marques_to_cais.jpg
+t3,Marquês to Belém,9.0,images/marques_to_belem.jpg
+t4,Marquês to Carcavelos,15.0,images/marques_to_carcavelos.jpg
+t5,Marquês to Costa da Caparica,18.0,images/marques_to_costa.jpg
