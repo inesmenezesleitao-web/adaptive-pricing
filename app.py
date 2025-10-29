@@ -75,9 +75,9 @@ def load_products():
          "image_url": ""},
         {"id": "t3", "name": "Marquês to Belém", "base_price": 9.0,
          "image_url": ""},
-        {"id": "t4", "name": "Marquês to Carcavelos", "base_price": 15.0,
+        {"id": "t4", "name": "Marquês to Carcavelos", "base_price": 16.0,
          "image_url": ""},
-        {"id": "t5", "name": "Marquês to Costa da Caparica", "base_price": 18.0,
+        {"id": "t5", "name": "Marquês to Costa da Caparica", "base_price": 19.0,
          "image_url": ""},
     ]
     
