@@ -540,7 +540,7 @@ if img_url:
                 # Fallback to Streamlit's st.image
                 st.image(img, use_container_width=True)
                 img_loaded = True
-    except Exception as e:
+        except Exception as e:
             error_msg = str(e)
             # Try direct file path without PIL
             try:
