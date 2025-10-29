@@ -16,12 +16,10 @@ import base64
 import gspread
 from google.oauth2.service_account import Credentials
 
-
-# ---------- CONFIG (edit these if you want) ----------
 APP_TITLE = "Uber Trip Pricing Experiment"
 NUM_PRODUCTS_TO_SHOW = 5          # how many trips per session
 UP_PCT = 0.12                     # +12% if ( would buy)
-DOWN_PCT = 0.08                   # -8% otherwise (wouldn't buy OR skip)
+DOWN_PCT = 0.08                   # -8% otherwise (wouldn't buy)
 MIN_MULTIPLIER = 0.50             # don't go below 50% of base
 MAX_MULTIPLIER = 2.00    
 # --- Time-aware step sizes (tune as you like) ---
@@ -408,7 +406,7 @@ if st.session_state.finished or st.session_state.idx >= len(st.session_state.pro
         st.divider()
         st.subheader("Perception of Uber dynamic pricing")
 
-        st.markdown("<div class='big-q secondary'>How fair is it for Uber to charge different prices at different times of the day (e.g., peak hours, rush hour, late night)?</div>", unsafe_allow_html=True)
+        st.markdown("<div class='big-q secondary'>How fair is it for Uber to charge different prices at different times of the day, such as peak hours, rush hour or late night? From 0 being very unfair to 10 being very fair.</div>", unsafe_allow_html=True)
         time_based_fairness = st.slider(
             "",
             min_value=0, max_value=10, value=5, help="0 = Not fair at all, 10 = Completely fair",
@@ -416,7 +414,7 @@ if st.session_state.finished or st.session_state.idx >= len(st.session_state.pro
             key="time_based_fairness"
         )
         
-        st.markdown("<div class='big-q secondary'>How fair is it for Uber to charge different prices based on demand factors (e.g., weather conditions, special events, high demand periods)?</div>", unsafe_allow_html=True)
+        st.markdown("<div class='big-q secondary'>How fair is it for Uber to charge different prices based on demand factors such as weather conditions, special events or high demand periods? From 0 being very unfair to 10 being very fair.</div>", unsafe_allow_html=True)
         demand_based_fairness = st.slider(
             "",
             min_value=0, max_value=10, value=5, help="0 = Not fair at all, 10 = Completely fair",
@@ -424,7 +422,7 @@ if st.session_state.finished or st.session_state.idx >= len(st.session_state.pro
             key="demand_based_fairness"
         )
         
-        st.markdown("<div class='big-q secondary'>How fair is it for Uber to charge different prices to different users for the same trip at the same time, based on user-specific data (e.g., your past booking behavior, willingness to pay)?</div>", unsafe_allow_html=True)
+        st.markdown("<div class='big-q secondary'>How fair is it for Uber to charge different prices to different users for the same trip at the same time, based on user-specific data such as your past booking behavior and willingness to pay? From 0 being very unfair to 10 being very fair</div>", unsafe_allow_html=True)
         personalized_fairness = st.slider(
             "",
             min_value=0, max_value=10, value=5, help="0 = Not fair at all, 10 = Completely fair",
@@ -432,7 +430,7 @@ if st.session_state.finished or st.session_state.idx >= len(st.session_state.pro
             key="personalized_fairness"
         )
         
-        st.markdown("<div class='big-q secondary'>How fair and transparent do you feel the pricing process was overall? Were you able to understand why prices might vary?</div>", unsafe_allow_html=True)
+        st.markdown("<div class='big-q secondary'>How fair and transparent do you feel the pricing process was overall? Were you able to understand why prices might vary? From 0 being very unfair to 10 being very fair. </div>", unsafe_allow_html=True)
         fairness_transparency_score = st.slider(
             "",
             min_value=0, max_value=10, value=5, help="0 = Not fair/transparent at all, 10 = Very fair and transparent",
@@ -440,7 +438,7 @@ if st.session_state.finished or st.session_state.idx >= len(st.session_state.pro
             key="fairness_transparency_score"
         )
         
-        st.markdown("<div class='big-q secondary'>From a fixed pricing for km (0) to totally dynamic pricing (10), what do you prefer?</div>", unsafe_allow_html=True)
+        st.markdown("<div class='big-q secondary'>From a fixed pricing for km (0) to totally dynamic pricing (10), what do you prefer, knowing that you could pay more sometimes but also have discounts.</div>", unsafe_allow_html=True)
         prefer_fixed_pricing = st.slider(
             "",
             min_value=0, max_value=10, value=5, help="0 = Fixed pricing for km, 10 = Totally dynamic pricing",
@@ -448,7 +446,7 @@ if st.session_state.finished or st.session_state.idx >= len(st.session_state.pro
             key="prefer_fixed_pricing"
         )
         
-        st.markdown("<div class='big-q secondary'>And how do you accept it if it is explained and you are aware of the reasons for a price raise, such as peak hour?</div>", unsafe_allow_html=True)
+        st.markdown("<div class='big-q secondary'>And how do you accept it if it is explained and you are aware of the reasons for a price raise, such as peak hour? From 0 being not at all acceptable to 10 being fully acceptable.</div>", unsafe_allow_html=True)
         acceptance_with_explanation = st.slider(
             "",
             min_value=0, max_value=10, value=5, help="0 = Do not accept, 10 = Fully accept",
