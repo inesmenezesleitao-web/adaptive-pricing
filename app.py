@@ -291,7 +291,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-SHOW_DEBUG = True  # Temporarily enabled to debug others_avg_paid issue
+SHOW_DEBUG = False  # Set to True to show admin panel and debug info
 
 # If we've just finished the survey, show a lightweight close page
 if st.session_state.get("show_close", False):
@@ -391,7 +391,7 @@ if st.session_state.finished or st.session_state.idx >= len(st.session_state.pro
             "base_price":"Base €",
             "offered_price":"You saw €",
             "bought":"You booked?",
-            "others_avg_paid":"Others avg paid €"
+            "others_avg_paid":"How much others paid, on average"
         }), use_container_width=True)
 
         # Totals
