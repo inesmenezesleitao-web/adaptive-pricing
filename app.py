@@ -446,7 +446,7 @@ if st.session_state.finished or st.session_state.idx >= len(st.session_state.pro
             key="prefer_fixed_pricing"
         )
         
-        st.markdown("<div class='big-q secondary'>And how do you accept it if the price is explained, making and aware of the reasons for a price raise, such as peak hour? From 0 being not at all acceptable to 10 being fully acceptable.</div>", unsafe_allow_html=True)
+        st.markdown("<div class='big-q secondary'>Do you accept dynamic pricing if the price is explained, making you aware of the reasons for a price raise, such as a peak hour? From 0 being not at all acceptable to 10 being fully acceptable.</div>", unsafe_allow_html=True)
         acceptance_with_explanation = st.slider(
             "",
             min_value=0, max_value=10, value=5, help="0 = Do not accept, 10 = Fully accept",
@@ -589,18 +589,18 @@ if img_url:
                 buffered = io.BytesIO()
                 img.save(buffered, format="PNG")
                 img_str = base64.b64encode(buffered.getvalue()).decode()
-                img_html = f'<img src="data:image/png;base64,{img_str}" style="max-width:100%;height:auto;">'
+                img_html = f'<img src="data:image/png;base64,{img_str}" style="max-width:50%;height:auto;display:block;margin:0 auto;">'
                 st.markdown(img_html, unsafe_allow_html=True)
                 img_loaded = True
             except Exception as e3:
                 # Fallback to Streamlit's st.image
-                st.image(img, use_container_width=True)
+                st.image(img, width=400)
                 img_loaded = True
         except Exception as e:
             error_msg = str(e)
             # Try direct file path without PIL
             try:
-                st.image(img_url, use_container_width=True)
+                st.image(img_url, width=400)
                 img_loaded = True
             except Exception as e2:
                 error_msg = f"PIL: {e}, Direct: {e2}"
