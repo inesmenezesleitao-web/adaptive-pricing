@@ -455,20 +455,29 @@ if st.session_state.finished or st.session_state.idx >= len(st.session_state.pro
         )
 
         # Show what you paid vs others
-        display_cols = ["product_name","base_price","offered_price","bought","others_avg_paid"]
+        display_cols = ["product_name","base_price","offered_price","others_avg_paid"]
         st.subheader("What you saw vs. what others paid (avg)")
         st.markdown("""
         <style>
         .dataframe { font-size: 1.6rem !important; }
-        .dataframe td { font-size: 1.6rem !important; padding: 0.75rem !important; }
-        .dataframe th { font-size: 1.6rem !important; padding: 0.75rem !important; }
+        .dataframe td { 
+            font-size: 1.6rem !important; 
+            padding: 0.75rem !important;
+            white-space: normal !important;
+            word-wrap: break-word !important;
+        }
+        .dataframe th { 
+            font-size: 1.6rem !important; 
+            padding: 0.75rem !important;
+            white-space: normal !important;
+            word-wrap: break-word !important;
+        }
         </style>
         """, unsafe_allow_html=True)
         st.dataframe(hist_df[display_cols].rename(columns={
             "product_name":"Trip",
             "base_price":"Base €",
             "offered_price":"You saw €",
-            "bought":"You booked?",
             "others_avg_paid":"How much others paid, on average"
         }), use_container_width=True)
 
@@ -485,16 +494,6 @@ if st.session_state.finished or st.session_state.idx >= len(st.session_state.pro
 
         st.divider()
         st.subheader("Perception of Uber dynamic pricing")
-        
-        # Add scale explanation at the top
-        st.markdown("""
-        <div style='background-color: #f0f2f6; padding: 1.2rem; border-radius: 0.5rem; margin-bottom: 1.5rem;'>
-            <div style='display: flex; justify-content: space-between; font-size: 1.1rem;'>
-                <span><strong>0</strong> = Very unfair and unacceptable</span>
-                <span><strong>10</strong> = Very fair and acceptable</span>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
 
         st.markdown("<div class='big-q secondary'>How fair is it for Uber to charge higher prices for higher demand periods, such as peak hours, special events, late night or rainy days?</div>", unsafe_allow_html=True)
         time_based_fairness = st.slider(
@@ -505,7 +504,7 @@ if st.session_state.finished or st.session_state.idx >= len(st.session_state.pro
         )
         st.markdown("<div style='display: flex; justify-content: space-between; font-size: 0.9rem; color: #666; margin-top: -0.5rem; margin-bottom: 1rem;'><span>Very unfair and unacceptable</span><span>Very fair and acceptable</span></div>", unsafe_allow_html=True)
         
-        st.markdown("<div class='big-q secondary'>How fair is it for Uber to charge different prices to different users for the same trip at the same time, based on user-specific data (e.g., your previous purchases, known willingness to pay)?</div>", unsafe_allow_html=True)
+        st.markdown("<div class='big-q secondary'>How fair is it for Uber to charge different prices to different users for the same trip at the same time, based on user-specific data such as your previous purchases and known willingness to pay?</div>", unsafe_allow_html=True)
         personalized_fairness = st.slider(
             "",
             min_value=0, max_value=10, value=5, help="0 = Not fair at all, 10 = Completely fair",
