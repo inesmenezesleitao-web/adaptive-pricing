@@ -479,7 +479,7 @@ if st.session_state.finished or st.session_state.idx >= len(st.session_state.pro
             "base_price":"Base €",
             "offered_price":"You saw €",
             "others_avg_paid":"How much others paid (average)€"
-        }), use_container_width=True)
+        }), use_container_width=True, hide_index=True)
 
         # Totals
         total_revenue = float(hist_df["revenue"].sum())
