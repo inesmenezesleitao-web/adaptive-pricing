@@ -443,38 +443,44 @@ if st.session_state.finished or st.session_state.idx >= len(st.session_state.pro
 
         st.divider()
         st.subheader("Perception of Uber dynamic pricing")
+        
+        # Add scale explanation at the top
+        st.markdown("""
+        <div style='background-color: #f0f2f6; padding: 1.2rem; border-radius: 0.5rem; margin-bottom: 1.5rem;'>
+            <p style='margin: 0; font-size: 1.2rem; text-align: center;'><strong>Rating scale for all questions below:</strong></p>
+            <div style='display: flex; justify-content: space-between; margin-top: 0.75rem; font-size: 1.05rem;'>
+                <span><strong>0</strong> = Very unfair and unacceptable</span>
+                <span><strong>10</strong> = Very fair and acceptable</span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
-        st.markdown("<div class='big-q secondary'>How fair is it for Uber to charge different prices at different times of the day, such as peak hours, rush hour or late night? From 0 being very unfair to 10 being very fair.</div>", unsafe_allow_html=True)
+        st.markdown("<div class='big-q secondary'>How fair is it for Uber to charge higher prices for higher demand periods, such as peak hours, special events, late night or rainy days?</div>", unsafe_allow_html=True)
         time_based_fairness = st.slider(
             "",
             min_value=0, max_value=10, value=5, help="0 = Not fair at all, 10 = Completely fair",
             label_visibility="collapsed",
             key="time_based_fairness"
         )
+        st.markdown("<div style='display: flex; justify-content: space-between; font-size: 0.9rem; color: #666; margin-top: -0.5rem; margin-bottom: 1rem;'><span>Very unfair and unacceptable</span><span>Very fair and acceptable</span></div>", unsafe_allow_html=True)
         
-        st.markdown("<div class='big-q secondary'>How fair is it for Uber to charge different prices based on demand factors such as weather conditions, special events or high demand periods? From 0 being very unfair to 10 being very fair.</div>", unsafe_allow_html=True)
+        st.markdown("<div class='big-q secondary'>How fair is it for Uber to charge different prices based on demand factors (e.g., weather conditions, special events, high demand periods)?</div>", unsafe_allow_html=True)
         demand_based_fairness = st.slider(
             "",
             min_value=0, max_value=10, value=5, help="0 = Not fair at all, 10 = Completely fair",
             label_visibility="collapsed",
             key="demand_based_fairness"
         )
+        st.markdown("<div style='display: flex; justify-content: space-between; font-size: 0.9rem; color: #666; margin-top: -0.5rem; margin-bottom: 1rem;'><span>Very unfair and unacceptable</span><span>Very fair and acceptable</span></div>", unsafe_allow_html=True)
         
-        st.markdown("<div class='big-q secondary'>How fair is it for Uber to charge different prices to different users for the same trip at the same time, based on user-specific data such as your past booking behavior and willingness to pay? From 0 being very unfair to 10 being very fair</div>", unsafe_allow_html=True)
-        personalized_fairness = st.slider(
-            "",
-            min_value=0, max_value=10, value=5, help="0 = Not fair at all, 10 = Completely fair",
-            label_visibility="collapsed",
-            key="personalized_fairness"
-        )
-        
-        st.markdown("<div class='big-q secondary'>How fair and transparent do you feel the pricing process was overall? Were you able to understand why prices might vary? From 0 being very unfair to 10 being very fair. </div>", unsafe_allow_html=True)
+        st.markdown("<div class='big-q secondary'>How fair and transparent do you feel the pricing process was overall? Were you able to understand why prices might vary?</div>", unsafe_allow_html=True)
         fairness_transparency_score = st.slider(
             "",
             min_value=0, max_value=10, value=5, help="0 = Not fair/transparent at all, 10 = Very fair and transparent",
             label_visibility="collapsed",
             key="fairness_transparency_score"
         )
+        st.markdown("<div style='display: flex; justify-content: space-between; font-size: 0.9rem; color: #666; margin-top: -0.5rem; margin-bottom: 1rem;'><span>Very unfair and unacceptable</span><span>Very fair and acceptable</span></div>", unsafe_allow_html=True)
         
         st.markdown("<div class='big-q secondary'>From a fixed pricing for km (0) to totally dynamic pricing (10), what do you prefer, knowing that you could pay more sometimes but also have discounts?</div>", unsafe_allow_html=True)
         prefer_fixed_pricing = st.slider(
@@ -483,14 +489,16 @@ if st.session_state.finished or st.session_state.idx >= len(st.session_state.pro
             label_visibility="collapsed",
             key="prefer_fixed_pricing"
         )
+        st.markdown("<div style='display: flex; justify-content: space-between; font-size: 0.9rem; color: #666; margin-top: -0.5rem; margin-bottom: 1rem;'><span>Fixed pricing for km</span><span>Totally dynamic pricing</span></div>", unsafe_allow_html=True)
         
-        st.markdown("<div class='big-q secondary'>Do you accept dynamic pricing if the price is explained, making you aware of the reasons for a price raise, such as a peak hour? From 0 being not at all acceptable to 10 being fully acceptable.</div>", unsafe_allow_html=True)
+        st.markdown("<div class='big-q secondary'>Do you accept dynamic pricing if the price is explained, making you aware of the reasons for a price raise, such as peak hour?</div>", unsafe_allow_html=True)
         acceptance_with_explanation = st.slider(
             "",
             min_value=0, max_value=10, value=5, help="0 = Do not accept, 10 = Fully accept",
             label_visibility="collapsed",
             key="acceptance_with_explanation"
         )
+        st.markdown("<div style='display: flex; justify-content: space-between; font-size: 0.9rem; color: #666; margin-top: -0.5rem; margin-bottom: 1rem;'><span>Do not accept</span><span>Fully accept</span></div>", unsafe_allow_html=True)
         
         comments = st.text_area("Any thoughts on Uber's dynamic pricing, fairness, transparency, or trust?")
 
