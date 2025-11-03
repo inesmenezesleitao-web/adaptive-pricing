@@ -42,6 +42,7 @@ PRODUCTS_CSV = "products.csv"
 # Ensure data dir
 os.makedirs(DATA_DIR, exist_ok=True)
 
+@st.cache_data
 def load_products():
     """Load trips from CSV or fallback to defaults."""
     if os.path.exists(PRODUCTS_CSV):
@@ -113,6 +114,7 @@ def append_rows(path, rows, columns):
     # mode='a' appends; header=False to avoid repeating header
     df.to_csv(path, mode="a", header=False, index=False)
 
+@st.cache_data(ttl=60)  # Cache for 60 seconds
 def read_tx():
     cols = [
         "timestamp","session_id","product_id","product_name","base_price",
@@ -153,6 +155,7 @@ def read_tx():
 
     return df
 
+@st.cache_data(ttl=60)  # Cache for 60 seconds
 def others_avg_paid_by_product(exclude_session_id):
     # Try to read from Google Sheets first, then fallback to CSV
     df = None
@@ -590,6 +593,13 @@ if img_url:
     if os.path.exists(img_url):
         try:
             img = Image.open(img_url)
+            # Resize image for faster loading (max width 800px)
+            max_width = 800
+            if img.width > max_width:
+                ratio = max_width / img.width
+                new_height = int(img.height * ratio)
+                img = img.resize((max_width, new_height), Image.Resampling.LANCZOS)
+            
             # Convert RGBA/LA/P to RGB for better compatibility
             if img.mode in ('RGBA', 'LA'):
                 rgb_img = Image.new('RGB', img.size, (255, 255, 255))
@@ -600,12 +610,12 @@ if img_url:
             elif img.mode not in ('RGB', 'L'):
                 img = img.convert('RGB')
             
-            # Try base64 encoding approach
+            # Try base64 encoding approach with JPEG for smaller file size
             try:
                 buffered = io.BytesIO()
-                img.save(buffered, format="PNG")
+                img.save(buffered, format="JPEG", quality=85, optimize=True)
                 img_str = base64.b64encode(buffered.getvalue()).decode()
-                img_html = f'<img src="data:image/png;base64,{img_str}" style="max-width:65%;height:auto;display:block;margin:0 auto;">'
+                img_html = f'<img src="data:image/jpeg;base64,{img_str}" style="max-width:65%;height:auto;display:block;margin:0 auto;">'
                 st.markdown(img_html, unsafe_allow_html=True)
                 img_loaded = True
             except Exception as e3:
