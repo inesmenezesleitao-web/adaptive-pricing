@@ -18,7 +18,7 @@ import gspread
 from google.oauth2.service_account import Credentials
 
 APP_TITLE = "Uber Trip Pricing Experiment"
-NUM_PRODUCTS_TO_SHOW = 5          # how many trips per session
+NUM_PRODUCTS_TO_SHOW = 7          # how many trips per session (including repeats)
 UP_PCT = 0.12                     # +12% if ( would buy)
 DOWN_PCT = 0.08                   # -8% otherwise (wouldn't buy)
 MIN_MULTIPLIER = 0.50             # don't go below 50% of base
@@ -258,8 +258,27 @@ if "session_id" not in st.session_state:
 
 if "products" not in st.session_state:
     all_products = load_products()
-    # Truncate or use all
-    st.session_state.products = all_products[:NUM_PRODUCTS_TO_SHOW]
+    # Take first 5 trips
+    products_list = all_products[:5]
+    
+    # Add repeat trips with contextual scenarios
+    # Trip 6: Repeat Cais do Sodré (was trip index 1) with rain scenario
+    if len(all_products) > 1:
+        repeat_cais = all_products[1].copy()
+        repeat_cais["id"] = "t2_rain"
+        repeat_cais["scenario"] = "rain"
+        repeat_cais["original_idx"] = 1  # Original trip index
+        products_list.append(repeat_cais)
+    
+    # Trip 7: Repeat Belém (was trip index 2) with traffic scenario
+    if len(all_products) > 2:
+        repeat_belem = all_products[2].copy()
+        repeat_belem["id"] = "t3_traffic"
+        repeat_belem["scenario"] = "traffic"
+        repeat_belem["original_idx"] = 2  # Original trip index
+        products_list.append(repeat_belem)
+    
+    st.session_state.products = products_list
 
 if "idx" not in st.session_state:
     st.session_state.idx = 0  # which product we are on (0-based)
@@ -573,7 +592,25 @@ st.session_state.touched_fair = False
 st.session_state.touched_buy = False
 
 base = float(product["base_price"])
-offered = round_price_eur(base * st.session_state.multiplier)
+
+# Special pricing for repeat trips
+if "scenario" in product:
+    # This is a repeat trip - check if user accepted the original
+    original_idx = product.get("original_idx", 0)
+    if original_idx < len(st.session_state.history):
+        original_trip = st.session_state.history[original_idx]
+        if original_trip.get("bought", False):
+            # User accepted the original price - increase by 15%
+            offered = round_price_eur(original_trip["offered_price"] * 1.15)
+        else:
+            # User didn't accept - keep same price as original
+            offered = round_price_eur(original_trip["offered_price"])
+    else:
+        # Fallback if history not available
+        offered = round_price_eur(base * st.session_state.multiplier)
+else:
+    # Normal trip - use current multiplier
+    offered = round_price_eur(base * st.session_state.multiplier)
 discount_pct = 0.0
 if offered < base:
     discount_pct = (1 - offered / base) * 100.0
@@ -680,10 +717,18 @@ def on_change_buy():
         st.session_state.touched_buy = True
 
 # Prominent main question heading before radio
-st.markdown(
-    "<div class='big-q'>Do you consider this price to be fair? If you needed this trip, would you book it at this price?</div>",
-    unsafe_allow_html=True,
-)
+# Check if this is a repeat trip with a scenario
+if "scenario" in product:
+    if product["scenario"] == "rain":
+        question_text = "<div class='big-q'>Now it's raining. Do you consider this price to be fair? If you needed this trip, would you book it at this price?</div>"
+    elif product["scenario"] == "traffic":
+        question_text = "<div class='big-q'>It's 7pm and there is heavy traffic. Do you consider this price to be fair? If you needed this trip, would you book it at this price?</div>"
+    else:
+        question_text = "<div class='big-q'>Do you consider this price to be fair? If you needed this trip, would you book it at this price?</div>"
+else:
+    question_text = "<div class='big-q'>Do you consider this price to be fair? If you needed this trip, would you book it at this price?</div>"
+
+st.markdown(question_text, unsafe_allow_html=True)
 combined_answer = st.radio(
     "",
     options=["Yes", "No"],
