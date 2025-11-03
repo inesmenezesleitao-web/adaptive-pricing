@@ -489,8 +489,7 @@ if st.session_state.finished or st.session_state.idx >= len(st.session_state.pro
         # Add scale explanation at the top
         st.markdown("""
         <div style='background-color: #f0f2f6; padding: 1.2rem; border-radius: 0.5rem; margin-bottom: 1.5rem;'>
-            <p style='margin: 0; font-size: 1.2rem; text-align: center;'><strong>Rating scale for all questions below:</strong></p>
-            <div style='display: flex; justify-content: space-between; margin-top: 0.75rem; font-size: 1.05rem;'>
+            <div style='display: flex; justify-content: space-between; font-size: 1.1rem;'>
                 <span><strong>0</strong> = Very unfair and unacceptable</span>
                 <span><strong>10</strong> = Very fair and acceptable</span>
             </div>
@@ -503,6 +502,15 @@ if st.session_state.finished or st.session_state.idx >= len(st.session_state.pro
             min_value=0, max_value=10, value=5, help="0 = Not fair at all, 10 = Completely fair",
             label_visibility="collapsed",
             key="time_based_fairness"
+        )
+        st.markdown("<div style='display: flex; justify-content: space-between; font-size: 0.9rem; color: #666; margin-top: -0.5rem; margin-bottom: 1rem;'><span>Very unfair and unacceptable</span><span>Very fair and acceptable</span></div>", unsafe_allow_html=True)
+        
+        st.markdown("<div class='big-q secondary'>How fair is it for Uber to charge different prices to different users for the same trip at the same time, based on user-specific data (e.g., your previous purchases, known willingness to pay)?</div>", unsafe_allow_html=True)
+        personalized_fairness = st.slider(
+            "",
+            min_value=0, max_value=10, value=5, help="0 = Not fair at all, 10 = Completely fair",
+            label_visibility="collapsed",
+            key="personalized_fairness"
         )
         st.markdown("<div style='display: flex; justify-content: space-between; font-size: 0.9rem; color: #666; margin-top: -0.5rem; margin-bottom: 1rem;'><span>Very unfair and unacceptable</span><span>Very fair and acceptable</span></div>", unsafe_allow_html=True)
         
@@ -541,7 +549,7 @@ if st.session_state.finished or st.session_state.idx >= len(st.session_state.pro
                           "decision_ms","fair_changes","buy_changes","up_pct","down_pct","others_avg_paid"]
 
             survey_columns = ["timestamp","session_id","total_revenue","total_lost",
-                              "time_based_fairness","demand_based_fairness","personalized_fairness",
+                              "time_based_fairness","personalized_fairness",
                               "fairness_transparency_score","prefer_fixed_pricing",
                               "acceptance_with_explanation","comments"]
 
@@ -593,7 +601,6 @@ if st.session_state.finished or st.session_state.idx >= len(st.session_state.pro
                 float(total_revenue),
                 float(total_lost),
                 time_based_fairness,
-                demand_based_fairness,
                 personalized_fairness,
                 fairness_transparency_score,
                 prefer_fixed_pricing,
