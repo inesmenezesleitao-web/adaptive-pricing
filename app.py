@@ -431,7 +431,6 @@ if SHOW_DEBUG:
 # If finished, show survey page
 if st.session_state.finished or st.session_state.idx >= len(st.session_state.products):
     st.session_state.finished = True
-    st.header("Final Questions & Summary")
 
     # Build your history DataFrame
     hist_df = pd.DataFrame(st.session_state.history)
@@ -456,7 +455,7 @@ if st.session_state.finished or st.session_state.idx >= len(st.session_state.pro
 
         # Show what you paid vs others
         display_cols = ["product_name","base_price","offered_price","others_avg_paid"]
-        st.subheader("Base price defined, the price that appeared to you and what others paid, on average")
+        st.markdown("<p style='font-size: 1.1rem; font-weight: 500; margin-bottom: 0.5rem;'>Base price defined, the price that appeared to you and what others paid, on average</p>", unsafe_allow_html=True)
         st.markdown("""
         <style>
         .dataframe { font-size: 1.2rem !important; }
