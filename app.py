@@ -18,7 +18,7 @@ import gspread
 from google.oauth2.service_account import Credentials
 
 APP_TITLE = "Uber Trip Pricing Experiment"
-NUM_PRODUCTS_TO_SHOW = 7          # how many trips per session (including repeats)
+NUM_PRODUCTS_TO_SHOW = 9          # how many trips per session (5 base + 4 repeats)
 UP_PCT = 0.12                     # +12% if ( would buy)
 DOWN_PCT = 0.08                   # -8% otherwise (wouldn't buy)
 MIN_MULTIPLIER = 0.50             # don't go below 50% of base
@@ -264,30 +264,49 @@ if "products" not in st.session_state:
     # Trip 1: Campo grande
     if len(all_products) > 0:
         products_list.append(all_products[0])
+        # Immediately add repeat with late night scenario
+        repeat_campo = all_products[0].copy()
+        repeat_campo["id"] = "t1_night"
+        repeat_campo["name"] = "(1 AM) " + repeat_campo["name"]
+        repeat_campo["scenario"] = "night"
+        repeat_campo["original_idx"] = 0  # Index in products_list where original appears
+        products_list.append(repeat_campo)
     
     # Trip 2: Cais do Sodré
     if len(all_products) > 1:
+        cais_idx = len(products_list)  # Remember where Cais appears
         products_list.append(all_products[1])
         # Immediately add repeat with rain scenario
         repeat_cais = all_products[1].copy()
         repeat_cais["id"] = "t2_rain"
+        repeat_cais["name"] = "(rainy day) " + repeat_cais["name"]
         repeat_cais["scenario"] = "rain"
-        repeat_cais["original_idx"] = 1  # Index in products_list where original appears
+        repeat_cais["original_idx"] = cais_idx  # Index in products_list where original appears
         products_list.append(repeat_cais)
     
     # Trip 3: Belém
     if len(all_products) > 2:
+        belem_idx = len(products_list)  # Remember where Belém appears
         products_list.append(all_products[2])
         # Immediately add repeat with traffic scenario
         repeat_belem = all_products[2].copy()
         repeat_belem["id"] = "t3_traffic"
+        repeat_belem["name"] = "(peak hour) " + repeat_belem["name"]
         repeat_belem["scenario"] = "traffic"
-        repeat_belem["original_idx"] = 3  # Index in products_list where original appears
+        repeat_belem["original_idx"] = belem_idx  # Index in products_list where original appears
         products_list.append(repeat_belem)
     
     # Trip 4: Carcavelos
     if len(all_products) > 3:
+        carcavelos_idx = len(products_list)  # Remember where Carcavelos appears
         products_list.append(all_products[3])
+        # Immediately add repeat with special event scenario
+        repeat_carcavelos = all_products[3].copy()
+        repeat_carcavelos["id"] = "t4_event"
+        repeat_carcavelos["name"] = "(special event) " + repeat_carcavelos["name"]
+        repeat_carcavelos["scenario"] = "event"
+        repeat_carcavelos["original_idx"] = carcavelos_idx  # Index in products_list where original appears
+        products_list.append(repeat_carcavelos)
     
     # Trip 5: Costa da Caparica
     if len(all_products) > 4:
@@ -479,15 +498,6 @@ if st.session_state.finished or st.session_state.idx >= len(st.session_state.pro
         )
         st.markdown("<div style='display: flex; justify-content: space-between; font-size: 0.9rem; color: #666; margin-top: -0.5rem; margin-bottom: 1rem;'><span>Very unfair and unacceptable</span><span>Very fair and acceptable</span></div>", unsafe_allow_html=True)
         
-        st.markdown("<div class='big-q secondary'>How fair is it for Uber to charge different prices based on demand factors (e.g., weather conditions, special events, high demand periods)?</div>", unsafe_allow_html=True)
-        demand_based_fairness = st.slider(
-            "",
-            min_value=0, max_value=10, value=5, help="0 = Not fair at all, 10 = Completely fair",
-            label_visibility="collapsed",
-            key="demand_based_fairness"
-        )
-        st.markdown("<div style='display: flex; justify-content: space-between; font-size: 0.9rem; color: #666; margin-top: -0.5rem; margin-bottom: 1rem;'><span>Very unfair and unacceptable</span><span>Very fair and acceptable</span></div>", unsafe_allow_html=True)
-        
         st.markdown("<div class='big-q secondary'>How fair and transparent do you feel the pricing process was overall? Were you able to understand why prices might vary?</div>", unsafe_allow_html=True)
         fairness_transparency_score = st.slider(
             "",
@@ -624,7 +634,7 @@ if "scenario" in product:
         original_trip = st.session_state.history[original_idx]
         if original_trip.get("bought", False):
             # User accepted the original price - increase by 15%
-            offered = round_price_eur(original_trip["offered_price"] * 1.15)
+            offered = round_price_eur(original_trip["offered_price"] * 1.20)
         else:
             # User didn't accept - keep same price as original
             offered = round_price_eur(original_trip["offered_price"])
@@ -742,10 +752,14 @@ def on_change_buy():
 # Prominent main question heading before radio
 # Check if this is a repeat trip with a scenario
 if "scenario" in product:
-    if product["scenario"] == "rain":
+    if product["scenario"] == "night":
+        question_text = "<div class='big-q'>It's 1 in the morning. Do you consider this price to be fair? If you needed this trip, would you book it at this price?</div>"
+    elif product["scenario"] == "rain":
         question_text = "<div class='big-q'>Now it's raining. Do you consider this price to be fair? If you needed this trip, would you book it at this price?</div>"
     elif product["scenario"] == "traffic":
         question_text = "<div class='big-q'>It's 7pm and there is heavy traffic. Do you consider this price to be fair? If you needed this trip, would you book it at this price?</div>"
+    elif product["scenario"] == "event":
+        question_text = "<div class='big-q'>There is a special event and many people are ordering Ubers. Do you consider this price to be fair? If you needed this trip, would you book it at this price?</div>"
     else:
         question_text = "<div class='big-q'>Do you consider this price to be fair? If you needed this trip, would you book it at this price?</div>"
 else:
