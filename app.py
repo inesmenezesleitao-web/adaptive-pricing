@@ -357,11 +357,11 @@ st.caption("This behavioral experiment was conducted as part of a Master’s the
 # --- Styling helpers for bigger questions ---
 st.markdown("""
 <style>
-.big-q { font-size: 1.6rem; font-weight: 400; margin: 0.5rem 0 0.25rem; }
-.big-q.secondary { font-size: 1.3rem; font-weight: 500; margin: 0.75rem 0 0.25rem; }
+.big-q { font-size: 1.3rem; font-weight: 300; margin: 0.5rem 0 0.25rem; }
+.big-q.secondary { font-size: 1.3rem; font-weight: 300; margin: 0.75rem 0 0.25rem; }
 
 /* Make Yes/No options a bit larger too */
-.stRadio [role="radiogroup"] > label { font-size: 1.6rem; }
+.stRadio [role="radiogroup"] > label { font-size: 1.3rem; }
 
 /* Slightly larger helper text under inputs (optional) */
 .block-container .stTooltipContent, .stCaption, .stMarkdown p { font-size: 1.0rem; }
@@ -382,13 +382,13 @@ st.markdown(
     """
     <style>
     /* Enlarge radio (main question) labels */
-    div.stRadio > label { font-size: 2.10rem !important; }
-    div[role="radiogroup"] label { font-size: 2.10rem !important; }
+    div.stRadio > label { font-size: 2.00rem !important; }
+    div[role="radiogroup"] label { font-size: 2.00rem !important; }
     /* Enlarge questionnaire slider labels */
     div.stSlider > label { font-size: 2.00rem !important; }
     div.stSlider label { font-size: 2.00rem !important; }
     /* Enlarge headings */
-    h2, h3 { font-size: 2.2rem !important; }
+    h2, h3 { font-size: 2.0rem !important; }
     /* Enlarge dataframe font */
     div[data-testid="stDataFrame"] * { font-size: 1.20rem !important; }
     /* Enlarge buttons */
@@ -459,15 +459,15 @@ if st.session_state.finished or st.session_state.idx >= len(st.session_state.pro
         st.subheader("Base price defined, the price that appeared to you and what others paid, on average")
         st.markdown("""
         <style>
-        .dataframe { font-size: 1.3rem !important; }
+        .dataframe { font-size: 1.2rem !important; }
         .dataframe td { 
-            font-size: 1.3rem !important; 
+            font-size: 1.2rem !important; 
             padding: 0.75rem !important;
             white-space: normal !important;
             word-wrap: break-word !important;
         }
         .dataframe th { 
-            font-size: 1.3rem !important; 
+            font-size: 1.2rem !important; 
             padding: 0.75rem !important;
             white-space: normal !important;
             word-wrap: break-word !important;
