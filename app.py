@@ -292,7 +292,7 @@ if "touched_buy" not in st.session_state:
 # ---------- UI ----------
 st.set_page_config(page_title=APP_TITLE, page_icon="🚗", layout="centered")
 st.title(APP_TITLE)
-st.caption("Experiment of pricing of different Uber trips departing from Marquês de Pombal.")
+st.caption("This behavioral experiment was conducted as part of a Master’s thesis and involves presenting participants with the prices of five different trips departing from Marquês de Pombal.")
 # --- Styling helpers for bigger questions ---
 st.markdown("""
 <style>
