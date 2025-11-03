@@ -522,7 +522,7 @@ if st.session_state.finished or st.session_state.idx >= len(st.session_state.pro
         )
         st.markdown("<div style='display: flex; justify-content: space-between; font-size: 0.9rem; color: #666; margin-top: -0.5rem; margin-bottom: 1rem;'><span>Very unfair and unacceptable</span><span>Very fair and acceptable</span></div>", unsafe_allow_html=True)
         
-        st.markdown("<div class='big-q secondary'>From a fixed pricing for km (0) to totally dynamic pricing (10), what do you prefer, knowing that you could pay more sometimes but also have discounts?</div>", unsafe_allow_html=True)
+        st.markdown("<div class='big-q secondary'>From a fixed pricing for km (0) to totally dynamic pricing (10), what do you prefer, knowing that with dynamic pricing you can pay more sometimes but also have discounts?</div>", unsafe_allow_html=True)
         prefer_fixed_pricing = st.slider(
             "",
             min_value=0, max_value=10, value=5, help="0 = Fixed pricing for km, 10 = Totally dynamic pricing",
@@ -531,7 +531,7 @@ if st.session_state.finished or st.session_state.idx >= len(st.session_state.pro
         )
         st.markdown("<div style='display: flex; justify-content: space-between; font-size: 0.9rem; color: #666; margin-top: -0.5rem; margin-bottom: 1rem;'><span>Fixed pricing for km</span><span>Totally dynamic pricing</span></div>", unsafe_allow_html=True)
         
-        st.markdown("<div class='big-q secondary'>Do you accept dynamic pricing if the price is explained, making you aware of the reasons for a price raise, such as peak hour?</div>", unsafe_allow_html=True)
+        st.markdown("<div class='big-q secondary'>Do you accept dynamic pricing if the increase in price is explained, such as during peak hour?</div>", unsafe_allow_html=True)
         acceptance_with_explanation = st.slider(
             "",
             min_value=0, max_value=10, value=5, help="0 = Do not accept, 10 = Fully accept",
