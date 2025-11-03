@@ -456,7 +456,7 @@ if st.session_state.finished or st.session_state.idx >= len(st.session_state.pro
 
         # Show what you paid vs others
         display_cols = ["product_name","base_price","offered_price","others_avg_paid"]
-        st.subheader("What you saw vs. what others paid (avg)")
+        st.subheader("Base price defined, the price that appeared to you and what others paid, on average")
         st.markdown("""
         <style>
         .dataframe { font-size: 1.6rem !important; }
