@@ -5,6 +5,7 @@ import time
 import os
 import uuid
 import math
+import shutil
 from datetime import datetime
 
 import pandas as pd
@@ -90,6 +91,21 @@ def round_price_eur(x):
 def ensure_csv(path, columns):
     if not os.path.exists(path):
         pd.DataFrame(columns=columns).to_csv(path, index=False)
+    else:
+        # Check if existing CSV has the same columns
+        try:
+            existing_df = pd.read_csv(path, nrows=0)  # Read only header
+            existing_cols = list(existing_df.columns)
+            if existing_cols != columns:
+                # Schema changed - backup old file and create new one with correct schema
+                backup_path = path.replace('.csv', '_backup.csv')
+                if os.path.exists(path):
+                    shutil.copy(path, backup_path)
+                # Create new CSV with correct schema
+                pd.DataFrame(columns=columns).to_csv(path, index=False)
+        except Exception:
+            # If any error reading, recreate the file
+            pd.DataFrame(columns=columns).to_csv(path, index=False)
 
 def append_rows(path, rows, columns):
     ensure_csv(path, columns)
@@ -438,7 +454,7 @@ if st.session_state.finished or st.session_state.idx >= len(st.session_state.pro
             key="fairness_transparency_score"
         )
         
-        st.markdown("<div class='big-q secondary'>From a fixed pricing for km (0) to totally dynamic pricing (10), what do you prefer, knowing that you could pay more sometimes but also have discounts.</div>", unsafe_allow_html=True)
+        st.markdown("<div class='big-q secondary'>From a fixed pricing for km (0) to totally dynamic pricing (10), what do you prefer, knowing that you could pay more sometimes but also have discounts?</div>", unsafe_allow_html=True)
         prefer_fixed_pricing = st.slider(
             "",
             min_value=0, max_value=10, value=5, help="0 = Fixed pricing for km, 10 = Totally dynamic pricing",
@@ -589,18 +605,18 @@ if img_url:
                 buffered = io.BytesIO()
                 img.save(buffered, format="PNG")
                 img_str = base64.b64encode(buffered.getvalue()).decode()
-                img_html = f'<img src="data:image/png;base64,{img_str}" style="max-width:50%;height:auto;display:block;margin:0 auto;">'
+                img_html = f'<img src="data:image/png;base64,{img_str}" style="max-width:65%;height:auto;display:block;margin:0 auto;">'
                 st.markdown(img_html, unsafe_allow_html=True)
                 img_loaded = True
             except Exception as e3:
                 # Fallback to Streamlit's st.image
-                st.image(img, width=400)
+                st.image(img, width=500)
                 img_loaded = True
         except Exception as e:
             error_msg = str(e)
             # Try direct file path without PIL
             try:
-                st.image(img_url, width=400)
+                st.image(img_url, width=500)
                 img_loaded = True
             except Exception as e2:
                 error_msg = f"PIL: {e}, Direct: {e2}"
