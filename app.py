@@ -267,7 +267,7 @@ if "products" not in st.session_state:
         # Immediately add repeat with late night scenario
         repeat_campo = all_products[0].copy()
         repeat_campo["id"] = "t1_night"
-        repeat_campo["name"] = "(1 AM) " + repeat_campo["name"]
+        repeat_campo["name"] = repeat_campo["name"] + " (1 AM)"
         repeat_campo["scenario"] = "night"
         repeat_campo["original_idx"] = 0  # Index in products_list where original appears
         products_list.append(repeat_campo)
@@ -279,7 +279,7 @@ if "products" not in st.session_state:
         # Immediately add repeat with rain scenario
         repeat_cais = all_products[1].copy()
         repeat_cais["id"] = "t2_rain"
-        repeat_cais["name"] = "(rainy day) " + repeat_cais["name"]
+        repeat_cais["name"] = repeat_cais["name"] + " (rainy day)"
         repeat_cais["scenario"] = "rain"
         repeat_cais["original_idx"] = cais_idx  # Index in products_list where original appears
         products_list.append(repeat_cais)
@@ -291,7 +291,7 @@ if "products" not in st.session_state:
         # Immediately add repeat with traffic scenario
         repeat_belem = all_products[2].copy()
         repeat_belem["id"] = "t3_traffic"
-        repeat_belem["name"] = "(peak hour) " + repeat_belem["name"]
+        repeat_belem["name"] = repeat_belem["name"] + " (peak hour)"
         repeat_belem["scenario"] = "traffic"
         repeat_belem["original_idx"] = belem_idx  # Index in products_list where original appears
         products_list.append(repeat_belem)
@@ -303,7 +303,7 @@ if "products" not in st.session_state:
         # Immediately add repeat with special event scenario
         repeat_carcavelos = all_products[3].copy()
         repeat_carcavelos["id"] = "t4_event"
-        repeat_carcavelos["name"] = "(special event) " + repeat_carcavelos["name"]
+        repeat_carcavelos["name"] = repeat_carcavelos["name"] + " (special event)"
         repeat_carcavelos["scenario"] = "event"
         repeat_carcavelos["original_idx"] = carcavelos_idx  # Index in products_list where original appears
         products_list.append(repeat_carcavelos)
@@ -315,7 +315,7 @@ if "products" not in st.session_state:
         # Immediately add repeat with public transport strike scenario
         repeat_caparica = all_products[4].copy()
         repeat_caparica["id"] = "t5_strike"
-        repeat_caparica["name"] = "(public transport strike) " + repeat_caparica["name"]
+        repeat_caparica["name"] = repeat_caparica["name"] + " (public transport strike)"
         repeat_caparica["scenario"] = "strike"
         repeat_caparica["original_idx"] = caparica_idx  # Index in products_list where original appears
         products_list.append(repeat_caparica)
@@ -478,7 +478,7 @@ if st.session_state.finished or st.session_state.idx >= len(st.session_state.pro
             "product_name":"Trip",
             "base_price":"Base €",
             "offered_price":"You saw €",
-            "others_avg_paid":"How much others paid, on average"
+            "others_avg_paid":"How much others paid (average)€"
         }), use_container_width=True)
 
         # Totals
@@ -664,7 +664,7 @@ if offered < base:
 
 # UI
 st.progress((idx) / len(products))
-st.subheader(f"Trip {idx+1} of {len(products)}: {product['name']}")
+st.subheader(f"{product['name']}")
 
 # Display trip image if available
 img_url = str(product.get("image_url", "")).strip()
