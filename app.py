@@ -18,7 +18,7 @@ import gspread
 from google.oauth2.service_account import Credentials
 
 APP_TITLE = "Uber Trip Pricing Experiment"
-NUM_PRODUCTS_TO_SHOW = 9          # how many trips per session (5 base + 4 repeats)
+NUM_PRODUCTS_TO_SHOW = 10         # how many trips per session (5 base + 5 repeats)
 UP_PCT = 0.12                     # +12% if ( would buy)
 DOWN_PCT = 0.08                   # -8% otherwise (wouldn't buy)
 MIN_MULTIPLIER = 0.50             # don't go below 50% of base
@@ -310,7 +310,15 @@ if "products" not in st.session_state:
     
     # Trip 5: Costa da Caparica
     if len(all_products) > 4:
+        caparica_idx = len(products_list)  # Remember where Costa da Caparica appears
         products_list.append(all_products[4])
+        # Immediately add repeat with public transport strike scenario
+        repeat_caparica = all_products[4].copy()
+        repeat_caparica["id"] = "t5_strike"
+        repeat_caparica["name"] = "(public transport strike) " + repeat_caparica["name"]
+        repeat_caparica["scenario"] = "strike"
+        repeat_caparica["original_idx"] = caparica_idx  # Index in products_list where original appears
+        products_list.append(repeat_caparica)
     
     st.session_state.products = products_list
 
@@ -760,6 +768,8 @@ if "scenario" in product:
         question_text = "<div class='big-q'>It's 7pm and there is heavy traffic. Do you consider this price to be fair? If you needed this trip, would you book it at this price?</div>"
     elif product["scenario"] == "event":
         question_text = "<div class='big-q'>There is a special event and many people are ordering Ubers. Do you consider this price to be fair? If you needed this trip, would you book it at this price?</div>"
+    elif product["scenario"] == "strike":
+        question_text = "<div class='big-q'>There is a public transport strike. Do you consider this price to be fair? If you needed this trip, would you book it at this price?</div>"
     else:
         question_text = "<div class='big-q'>Do you consider this price to be fair? If you needed this trip, would you book it at this price?</div>"
 else:
