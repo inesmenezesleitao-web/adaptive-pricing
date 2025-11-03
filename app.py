@@ -459,15 +459,15 @@ if st.session_state.finished or st.session_state.idx >= len(st.session_state.pro
         st.subheader("Base price defined, the price that appeared to you and what others paid, on average")
         st.markdown("""
         <style>
-        .dataframe { font-size: 1.6rem !important; }
+        .dataframe { font-size: 1.3rem !important; }
         .dataframe td { 
-            font-size: 1.6rem !important; 
+            font-size: 1.3rem !important; 
             padding: 0.75rem !important;
             white-space: normal !important;
             word-wrap: break-word !important;
         }
         .dataframe th { 
-            font-size: 1.6rem !important; 
+            font-size: 1.3rem !important; 
             padding: 0.75rem !important;
             white-space: normal !important;
             word-wrap: break-word !important;
