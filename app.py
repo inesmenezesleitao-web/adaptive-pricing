@@ -258,25 +258,40 @@ if "session_id" not in st.session_state:
 
 if "products" not in st.session_state:
     all_products = load_products()
-    # Take first 5 trips
-    products_list = all_products[:5]
+    # Build trip sequence with repeats inserted after their originals
+    products_list = []
     
-    # Add repeat trips with contextual scenarios
-    # Trip 6: Repeat Cais do Sodré (was trip index 1) with rain scenario
+    # Trip 1: Campo grande
+    if len(all_products) > 0:
+        products_list.append(all_products[0])
+    
+    # Trip 2: Cais do Sodré
     if len(all_products) > 1:
+        products_list.append(all_products[1])
+        # Immediately add repeat with rain scenario
         repeat_cais = all_products[1].copy()
         repeat_cais["id"] = "t2_rain"
         repeat_cais["scenario"] = "rain"
-        repeat_cais["original_idx"] = 1  # Original trip index
+        repeat_cais["original_idx"] = 1  # Index in products_list where original appears
         products_list.append(repeat_cais)
     
-    # Trip 7: Repeat Belém (was trip index 2) with traffic scenario
+    # Trip 3: Belém
     if len(all_products) > 2:
+        products_list.append(all_products[2])
+        # Immediately add repeat with traffic scenario
         repeat_belem = all_products[2].copy()
         repeat_belem["id"] = "t3_traffic"
         repeat_belem["scenario"] = "traffic"
-        repeat_belem["original_idx"] = 2  # Original trip index
+        repeat_belem["original_idx"] = 3  # Index in products_list where original appears
         products_list.append(repeat_belem)
+    
+    # Trip 4: Carcavelos
+    if len(all_products) > 3:
+        products_list.append(all_products[3])
+    
+    # Trip 5: Costa da Caparica
+    if len(all_products) > 4:
+        products_list.append(all_products[4])
     
     st.session_state.products = products_list
 
