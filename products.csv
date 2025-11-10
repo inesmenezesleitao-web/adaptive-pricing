@@ -1,6 +1,8 @@
-id,name,base_price,image_url
-t1,Marquês to Campo grande,4.0,images/marques_to_campo_grande.jpg
-t2,Marquês to Cais do Sodré,6.0,images/marques_to_cais.jpg
-t3,Marquês to Belém,9.0,images/marques_to_belem.jpg
-t4,Marquês to Carcavelos,15.0,images/marques_to_carcavelos.jpg
-t5,Marquês to Costa da Caparica,18.0,images/marques_to_costa.jpg
+id,name,base_price,image_url,repeat_of,context_description
+t1,Marquês to Campo grande,4.0,images/marques_to_campo_grande.jpg,,
+t2,Marquês to Cais do Sodré,6.0,images/marques_to_cais.jpg,,
+t3,Marquês to Belém,9.0,images/marques_to_belem.jpg,,
+t4,Marquês to Carcavelos,15.0,images/marques_to_carcavelos.jpg,,
+t5,Marquês to Costa da Caparica,18.0,images/marques_to_costa.jpg,,
+t6,Marquês to Cais do Sodré (Rain),6.0,images/marques_to_cais.jpg,t2,Now it's raining.
+t7,Marquês to Belém (Traffic),9.0,images/marques_to_belem.jpg,t3,It's 7pm and there is heavy traffic.

@@ -766,19 +766,19 @@ def on_change_buy():
 # Check if this is a repeat trip with a scenario
 if "scenario" in product:
     if product["scenario"] == "night":
-        question_text = "<div class='big-q'>It's 1 in the morning. Do you consider this price to be fair? If you needed this trip, would you book it at this price?</div>"
+        question_text = "<div class='big-q'>It's 1 in the morning. If you needed to go to this place, would you take this trip at this price?</div>"
     elif product["scenario"] == "rain":
-        question_text = "<div class='big-q'>Now it's raining. Do you consider this price to be fair? If you needed this trip, would you book it at this price?</div>"
+        question_text = "<div class='big-q'>Now it's raining. If you needed to go to this place, would you take this trip at this price?</div>"
     elif product["scenario"] == "traffic":
-        question_text = "<div class='big-q'>It's 7pm and there is heavy traffic. Do you consider this price to be fair? If you needed this trip, would you book it at this price?</div>"
+        question_text = "<div class='big-q'>It's 7pm and there is heavy traffic. If you needed to go to this place, would you take this trip at this price?</div>"
     elif product["scenario"] == "event":
-        question_text = "<div class='big-q'>There is a special event and many people are ordering Ubers. Do you consider this price to be fair? If you needed this trip, would you book it at this price?</div>"
+        question_text = "<div class='big-q'>There is a special event and many people are ordering Ubers. If you needed to go to this place, would you take this trip at this price?</div>"
     elif product["scenario"] == "strike":
-        question_text = "<div class='big-q'>There is a public transport strike. Do you consider this price to be fair? If you needed this trip, would you book it at this price?</div>"
+        question_text = "<div class='big-q'>There is a public transport strike. If you needed to go to this place, would you take this trip at this price?</div>"
     else:
-        question_text = "<div class='big-q'>Do you consider this price to be fair? If you needed this trip, would you book it at this price?</div>"
+        question_text = "<div class='big-q'>If you needed to go to this place, would you take this trip at this price?</div>"
 else:
-    question_text = "<div class='big-q'>Do you consider this price to be fair? If you needed this trip, would you book it at this price?</div>"
+    question_text = "<div class='big-q'>If you needed to go to this place, would you take this trip at this price?</div>"
 
 st.markdown(question_text, unsafe_allow_html=True)
 combined_answer = st.radio(
